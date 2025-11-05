@@ -22,7 +22,7 @@ namespace Jump
         public bool EnableJumpLog { get; private set; } = false;
 
         // 空中控制参数
-        public float AirControlFactor { get; private set; } = 0.4f;      // 空中控制力系数 
+        public float AirControlFactor { get; private set; } = 0.6f;      // 空中控制力系数 
         public float AirDragFactor { get; private set; } = 0.8f;       // 空气阻力系数 
 
         public JumpConfigManager(ModInfo modInfo)
@@ -230,7 +230,7 @@ namespace Jump
             EnableJumpLog = false;
 
             // 重置空中控制参数
-            AirControlFactor = 0.4f;
+            AirControlFactor = 0.6f;
             AirDragFactor = 0.8f;
 
             // 同步更新ModSetting的UI显示值
@@ -242,7 +242,7 @@ namespace Jump
             ModSettingAPI.SetValue("enableJumpLog", false);
 
             // 重置空中控制参数UI显示
-            ModSettingAPI.SetValue("airControlFactor", 0.4f);
+            ModSettingAPI.SetValue("airControlFactor", 0.6f);
             ModSettingAPI.SetValue("airDragFactor", 0.8f);
 
             // 同步到JumpLogger
