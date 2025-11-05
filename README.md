@@ -7,11 +7,9 @@ Escape from Duckov 的马里奥风格跳跃模组，支持按住跳跃键持续�
 - 马里奥式跳跃机制
 - 土狼时间和输入缓存
 - ModSetting 配置系统
-- 完整的调试日志
 
 ## 技术依赖
 
 - Escape from Duckov
-- BepInEx
 - ModSetting
 - 0Harmony
