@@ -1,37 +1,37 @@
-# JumpMod - Escape from Duckov
+# JumpMod - Duckov 跳跃增强模组
 
-A mod for Escape from Duckov that enhances jump mechanics and provides configurable jumping controls.
+Escape from Duckov 游戏的跳跃功能增强模组，提供可配置的跳跃控制。
 
-## Features
+## 功能特性
 
-- Enhanced jump mechanics with customizable parameters
-- Configurable jump height and sensitivity
-- Debug logging for troubleshooting
-- Clean integration with the base game
+- 增强的跳跃机制，支持自定义参数
+- 可配置的跳跃高度和灵敏度
+- 调试日志功能，便于排查问题
+- 与原游戏无缝集成
 
-## Installation
+## 安装方法
 
-1. Download the latest release
-2. Extract to your Duckov/Mods folder
-3. Configure settings in `JumpConfig.json`
+1. 下载最新版本
+2. 解压到 Duckov/Mods 文件夹
+3. 编辑 `JumpConfig.json` 配置文件
 
-## Configuration
+## 配置说明
 
-Edit `JumpConfig.json` to customize:
-- Jump multiplier
-- Fall damage modifier
-- Debug logging level
+编辑 `JumpConfig.json` 自定义：
+- 跳跃倍数
+- 摔落伤害修正
+- 调试日志等级
 
-## Requirements
+## 依赖要求
 
-- Escape from Duckov
-- BepInEx
-- 0Harmony
+- Escape from Duckov 游戏本体
+- BepInEx 模组框架
+- 0Harmony 库
 
-## License
+## 开源许可
 
-This project is open source. Feel free to contribute or modify.
+本项目开源，欢迎贡献代码或修改使用。
 
-## Contributing
+## 贡献代码
 
-Pull requests are welcome. Please ensure your code follows the project's style guidelines.
+欢迎提交 Pull Request。请确保代码符合项目规范。
