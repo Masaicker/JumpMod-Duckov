@@ -95,7 +95,7 @@ public class CharacterJumpController : MonoBehaviour
             bool jumpStarted = TryStartJump();
 
             // 只有跳跃完全没有开始时才设置输入缓存
-            if (!jumpStarted)
+            if (!jumpStarted && CanBufferJumpInput())
             {
                 JumpLogger.LogYellow($"设置输入缓存: {JUMP_BUFFER_TIME}秒");
                 hasJumpBufferedInput = true;
@@ -160,6 +160,19 @@ public class CharacterJumpController : MonoBehaviour
             return false;
         }
 
+        return true;
+    }
+
+    /// <summary>
+    /// 检查是否可以缓存跳跃输入
+    /// </summary>
+    private bool CanBufferJumpInput()
+    {
+        if (characterMainControl.Health.IsDead || !characterMainControl.CanMove())
+        {
+            JumpLogger.LogYellow("状态不允许，不设置跳跃缓存");
+            return false;
+        }
         return true;
     }
 
