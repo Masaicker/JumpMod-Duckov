@@ -21,6 +21,10 @@ namespace Jump
         public KeyCode JumpKey { get; private set; } = KeyCode.Z;
         public bool EnableJumpLog { get; private set; } = false;
 
+        // 空中控制参数
+        public float AirControlFactor { get; private set; } = 0.4f;      // 空中控制力系数 
+        public float AirDragFactor { get; private set; } = 0.8f;       // 空气阻力系数 
+
         public JumpConfigManager(ModInfo modInfo)
         {
             this.modInfo = modInfo;
@@ -49,6 +53,13 @@ namespace Jump
 
             // 按键绑定
             ModSettingAPI.AddKeybinding("jumpKey", "跳跃按键 Jump Key", JumpKey, OnJumpKeyChanged);
+
+            // 空中控制参数
+            ModSettingAPI.AddSlider("airControlFactor", "空中控制强度 Air Control Strength", AirControlFactor,
+                new Vector2(0.1f, 1.0f), OnAirControlFactorChanged, decimalPlaces: 2);
+
+            ModSettingAPI.AddSlider("airDragFactor", "空中惯性保持 Air Inertial Retention", AirDragFactor,
+                new Vector2(0.1f, 1.0f), OnAirDragFactorChanged, decimalPlaces: 3);
 
             // 日志开关
             ModSettingAPI.AddToggle("enableJumpLog", "启用跳跃日志 Enable Jump Log", EnableJumpLog, OnEnableJumpLogChanged);
@@ -98,6 +109,18 @@ namespace Jump
                 {
                     OnJumpKeyChanged(jumpKey);
                     JumpLogger.LogWhite($"读取跳跃按键: {jumpKey}");
+                }
+
+                if (ModSettingAPI.GetSavedValue("airControlFactor", out float airControlFactor))
+                {
+                    OnAirControlFactorChanged(airControlFactor);
+                    JumpLogger.LogWhite($"读取空中控制强度: {airControlFactor}");
+                }
+
+                if (ModSettingAPI.GetSavedValue("airDragFactor", out float airDragFactor))
+                {
+                    OnAirDragFactorChanged(airDragFactor);
+                    JumpLogger.LogWhite($"读取空中惯性保持: {airDragFactor}");
                 }
 
                 if (ModSettingAPI.GetSavedValue("enableJumpLog", out bool enableJumpLog))
@@ -158,6 +181,18 @@ namespace Jump
             JumpLogger.LogWhite($"跳跃按键更新为: {keyCode}");
         }
 
+        private void OnAirControlFactorChanged(float value)
+        {
+            AirControlFactor = Mathf.Clamp(value, 0.1f, 1.0f);
+            JumpLogger.LogWhite($"空中控制强度更新为: {AirControlFactor:F2} (地面强度的{AirControlFactor * 100:F0}%)");
+        }
+
+        private void OnAirDragFactorChanged(float value)
+        {
+            AirDragFactor = Mathf.Clamp(value, 0.5f, 1.0f);
+            JumpLogger.LogWhite($"空中惯性保持更新为: {AirDragFactor:F3} (每秒保留{AirDragFactor * 100:F0}%速度)");
+        }
+
         private void OnEnableJumpLogChanged(bool enabled)
         {
             EnableJumpLog = enabled;
@@ -194,6 +229,10 @@ namespace Jump
             JumpKey = KeyCode.Z;
             EnableJumpLog = false;
 
+            // 重置空中控制参数
+            AirControlFactor = 0.4f;
+            AirDragFactor = 0.8f;
+
             // 同步更新ModSetting的UI显示值
             ModSettingAPI.SetValue("minJumpPower", 5f);
             ModSettingAPI.SetValue("maxJumpPower", 8f);
@@ -201,6 +240,10 @@ namespace Jump
             ModSettingAPI.SetValue("accelerationDecay", 0.7f);
             ModSettingAPI.SetValue("jumpKey", KeyCode.Z);
             ModSettingAPI.SetValue("enableJumpLog", false);
+
+            // 重置空中控制参数UI显示
+            ModSettingAPI.SetValue("airControlFactor", 0.4f);
+            ModSettingAPI.SetValue("airDragFactor", 0.8f);
 
             // 同步到JumpLogger
             JumpLogger.enableLogs = false;

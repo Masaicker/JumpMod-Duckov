@@ -27,6 +27,10 @@ public class CharacterJumpController : MonoBehaviour
     private float currentBoostAcceleration = 0f;
     private float jumpStartHeight = 0f;
 
+    // 空中水平控制管理
+    private Vector3 airHorizontalVelocity = Vector3.zero;     // 当前空中水平速度
+    private Vector3 initialInheritedVelocity = Vector3.zero; // 继承的初始惯性
+
     
     // 输入缓存 - 落地前的跳跃输入记录
     private bool hasJumpBufferedInput = false;
@@ -176,10 +180,16 @@ public class CharacterJumpController : MonoBehaviour
         hasJumpBufferedInput = false;
         jumpBufferCounter = 0f;
 
-        // 保留水平速度，设置初始垂直速度
-        Vector3 velocity = characterMovement.velocity;
-        velocity.y = currentJumpPower;
-        characterMovement.velocity = velocity;
+        // 获取当前的地面水平速度作为惯性基础
+        Vector3 currentVelocity = characterMovement.velocity;
+        initialInheritedVelocity = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
+        airHorizontalVelocity = initialInheritedVelocity; // 初始化空中水平速度
+
+        // 设置跳跃初始速度，使用继承的水平惯性
+        Vector3 jumpVelocity = new Vector3(airHorizontalVelocity.x, currentJumpPower, airHorizontalVelocity.z);
+        characterMovement.velocity = jumpVelocity;
+
+        JumpLogger.LogWhite($"跳跃开始 - 继承水平惯性: X={airHorizontalVelocity.x:F2}, Z={airHorizontalVelocity.z:F2}");
 
         // 暂停地面约束
         characterMovement.PauseGroundConstraint();
@@ -231,6 +241,12 @@ public class CharacterJumpController : MonoBehaviour
             }
 
             //JumpLogger.LogWhite($"持续加速 - 当前力度: {currentJumpPower:F2}, 当前加速度: {currentBoostAcceleration:F2}, 跳跃高度: {transform.position.y - jumpStartHeight:F2}m, 垂直速度: {characterMovement.velocity.y:F2}");
+        }
+
+        // 空中水平控制系统
+        if (isJumping)
+        {
+            UpdateAirControl();
         }
         // 检测着陆 - 检测接触地面
         if (isJumping && movement.IsOnGround && characterMovement.velocity.y <= 0f)
@@ -320,6 +336,10 @@ public class CharacterJumpController : MonoBehaviour
         currentBoostAcceleration = 0f;
         jumpStartHeight = 0f;
 
+        // 清除空中控制状态
+        airHorizontalVelocity = Vector3.zero;
+        initialInheritedVelocity = Vector3.zero;
+
         // 检查是否有输入缓存，如果有则立即执行跳跃
         if (hasJumpBufferedInput && jumpBufferCounter > 0f)
         {
@@ -350,6 +370,53 @@ public class CharacterJumpController : MonoBehaviour
     }
 
     /// <summary>
+    /// 空中水平控制系统 - 继承惯性+自然衰减+方向键微调
+    /// </summary>
+    private void UpdateAirControl()
+    {
+        if (configManager == null) return;
+
+        // 1. 应用空气阻力（时间相关的指数衰减，帧率无关）
+        // AirDragFactor应该改为每秒的衰减率，而不是每帧
+        airHorizontalVelocity *= Mathf.Pow(configManager.AirDragFactor, Time.deltaTime * 5);
+        //JumpLogger.LogWhite(airHorizontalVelocity.magnitude);
+
+        // 2. 获取当前移动输入
+        Vector3 currentMoveInput = movement.MoveInput;
+
+        // 3. 如果有方向键输入，进行空中微调
+        if (currentMoveInput.magnitude > 0.02f && characterMainControl.CanMove())
+        {
+            // 在惯性基础上叠加空中控制加速度
+            float airAcceleration = movement.Running ? movement.runAcc : movement.walkAcc;
+            airAcceleration *= configManager.AirControlFactor; // 使用配置的空中控制系数
+
+            // 计算当前帧的空中控制加速度向量
+            Vector3 airControlAcceleration = currentMoveInput * (airAcceleration * Time.deltaTime);
+
+            // 在惯性基础上叠加加速度（而不是替换速度）
+            Vector3 newHorizontalVelocity = airHorizontalVelocity + airControlAcceleration;
+
+            // 限制最大速度（防止无限加速）
+            float maxSpeed = movement.Running ? movement.runSpeed : movement.walkSpeed;
+            if (newHorizontalVelocity.magnitude > maxSpeed)
+            {
+                newHorizontalVelocity = newHorizontalVelocity.normalized * maxSpeed;
+            }
+
+            airHorizontalVelocity = newHorizontalVelocity;
+
+            //JumpLogger.LogWhite($"空中微调 - 加速度: ({airControlAcceleration.x:F2}, {airControlAcceleration.z:F2}), 新速度: ({airHorizontalVelocity.x:F2}, {airHorizontalVelocity.z:F2})");
+        }
+
+        // 4. 应用最终的水平速度到角色
+        Vector3 finalVelocity = characterMovement.velocity;
+        finalVelocity.x = airHorizontalVelocity.x;
+        finalVelocity.z = airHorizontalVelocity.z;
+        characterMovement.velocity = finalVelocity;
+    }
+
+    /// <summary>
     /// 重置跳跃状态
     /// </summary>
     public void ResetJumpState()
@@ -360,6 +427,10 @@ public class CharacterJumpController : MonoBehaviour
         currentJumpPower = 0f;
         currentBoostAcceleration = 0f;
         jumpStartHeight = 0f;
+
+        // 清除空中控制状态
+        airHorizontalVelocity = Vector3.zero;
+        initialInheritedVelocity = Vector3.zero;
 
         // 重置输入缓存状态
         hasJumpBufferedInput = false;
