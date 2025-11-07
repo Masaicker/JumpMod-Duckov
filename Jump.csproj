@@ -25,6 +25,7 @@
         <Reference Include="$(DuckovPath)$(SubPath)AstarPathfindingProject.dll"/>
         <Reference Include="$(DuckovPath)$(SubPath)SodaLocalization.dll"/>
         <Reference Include="$(DuckovPath)$(SubPath)ECM2.dll"/>
+        <Reference Include="$(DuckovPath)$(SubPath)Dotween.dll"/>
         <Reference Include="0Harmony">
             <HintPath>E:\Steam\steamapps\workshop\content\3167020\3589088839\0Harmony.dll</HintPath>
         </Reference>

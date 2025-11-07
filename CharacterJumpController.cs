@@ -3,6 +3,7 @@ using Jump;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Duckov.Modding;
+using DG.Tweening;
 using ModBehaviour = Jump.ModBehaviour;
 
 /// <summary>
@@ -30,6 +31,22 @@ public class CharacterJumpController : MonoBehaviour
     // 空中水平控制管理
     private Vector3 airHorizontalVelocity = Vector3.zero;     // 当前空中水平速度
     private Vector3 initialInheritedVelocity = Vector3.zero; // 继承的初始惯性
+
+    // Scale动效相关参数
+    private Vector3 jumpStartScale;    // 跳跃开始时的原始scale
+    private Tween? jumpScaleTween;      // DOTween动画
+    private float currentStartScaleY;   // 记录当前实际的Y轴scale（用于下落动画）
+
+    // 可配置的Scale动画参数
+    [Header("跳跃Scale动画参数")]
+    [SerializeField] private float jumpSquashFactor = 0.8f;        // 起跳挤压系数 (0.5 = 压缩到50%)
+    [SerializeField] private float fallStretchFactor = 1.3f;       // 下落拉伸系数 (1.2 = 拉伸到120%)
+    [SerializeField] private float landingBounceFactor = 0.85f;    // 着陆挤压系数 (0.85 = 压缩到85%)
+
+    [Header("动画时间参数")]
+    [SerializeField] private float squashDuration = 0.08f;         // 挤压动画时间
+    [SerializeField] private float bounceMinDuration = 0.3f;       // 回弹最小时间
+    [SerializeField] private float bounceMaxDuration = 0.5f;       // 回弹最大时间
 
     
     // 输入缓存 - 落地前的跳跃输入记录
@@ -222,7 +239,72 @@ public class CharacterJumpController : MonoBehaviour
         // 暂停地面约束
         characterMovement.PauseGroundConstraint();
 
+        // DOTween挤压动画
+        jumpStartScale = Vector3.one; // 记录原始scale
+
+        // 杀死任何现有的Scale动画
+        jumpScaleTween?.Kill();
+
+        // 起跳挤压：瞬间压缩然后快速恢复
+        Vector3 squashedScale = new Vector3(jumpStartScale.x, jumpStartScale.y * jumpSquashFactor, jumpStartScale.z);
+        jumpScaleTween = transform.DOScale(squashedScale, squashDuration)
+            .SetEase(Ease.OutBack)
+            .OnComplete(StartStretchAnimation);
+
         JumpLogger.LogWhite($"跳跃开始 - 初始力度: {currentJumpPower:F2}");
+        JumpLogger.LogWhite($"DOTween挤压动画 - 目标ScaleY: {squashedScale.y:F3}");
+    }
+
+    /// <summary>
+    /// 开始拉伸动画 - 使用Sequence控制两阶段动画
+    /// </summary>
+    private void StartStretchAnimation()
+    {
+        if (!isJumping) return;
+
+        jumpScaleTween?.Kill();
+        jumpScaleTween = DOTween.Sequence()
+            .Append(transform.DOScale(new Vector3(jumpStartScale.x, jumpStartScale.y * 1.15f, jumpStartScale.z), 0.15f)
+                .SetEase(Ease.OutQuad))
+            .Append(transform.DOScale(jumpStartScale, 0.15f)
+                .SetEase(Ease.InQuad))
+            .OnComplete(() => JumpLogger.LogWhite("拉伸动画Sequence完成"));
+        JumpLogger.LogWhite("开始拉伸动画Sequence - 0.2秒拉伸到1.2倍，0.1秒还原到1倍");
+    }
+
+    
+    
+    /// <summary>
+    /// 着陆回弹动画 - 渐进过渡效果，可被打断
+    /// </summary>
+    private void StartLandingBounceAnimation()
+    {
+        // 根据跳跃高度动态调整回弹参数
+        float jumpHeight = transform.position.y - jumpStartHeight;
+        if (configManager == null) return;
+        float maxExpectedHeight = configManager.MaxJumpPower * configManager.MaxJumpPower / (2f * Mathf.Abs(Physics.gravity.y));
+        float heightRatio = Mathf.Clamp01(jumpHeight / maxExpectedHeight);
+
+        // 回弹时间：跳得越高，回弹时间越长
+        float bounceDuration = bounceMinDuration + heightRatio * (bounceMaxDuration - bounceMinDuration);
+
+        // 先快速挤压到着陆状态
+        Vector3 squashedScale = new Vector3(jumpStartScale.x, jumpStartScale.y * landingBounceFactor, jumpStartScale.z);
+        float squashTime = bounceDuration * 0.2f; // 挤压占用20%的时间
+
+        jumpScaleTween?.Kill();
+        jumpScaleTween = transform.DOScale(squashedScale, squashTime)
+            .SetEase(Ease.OutQuad)
+            .OnComplete(() => {
+                // 挤压完成后开始回弹
+                float bounceTime = bounceDuration * 0.8f; // 回弹占用80%的时间
+                jumpScaleTween = transform.DOScale(jumpStartScale, bounceTime)
+                    .SetEase(Ease.OutElastic, 1f, 0.8f + heightRatio * 0.4f); // 弹性因子也根据高度调整
+
+                JumpLogger.LogWhite($"DOTween着陆回弹 - 开始回弹，时间: {bounceTime:F3}s");
+            });
+
+        JumpLogger.LogWhite($"DOTween着陆回弹 - 挤压ScaleY: {squashedScale.y:F3}, 挤压时间: {squashTime:F3}s, 总时间: {bounceDuration:F3}s");
     }
 
     /// <summary>
@@ -269,6 +351,30 @@ public class CharacterJumpController : MonoBehaviour
             }
 
             //JumpLogger.LogWhite($"持续加速 - 当前力度: {currentJumpPower:F2}, 当前加速度: {currentBoostAcceleration:F2}, 跳跃高度: {transform.position.y - jumpStartHeight:F2}m, 垂直速度: {characterMovement.velocity.y:F2}");
+        }
+
+        
+        // 实时下落动画 - 直接根据速度动态计算Scale
+        if (isJumping && characterMovement.velocity.y < 0)
+        {
+            if (jumpScaleTween != null)
+            {
+                jumpScaleTween.Kill();
+                jumpScaleTween = null;
+                currentStartScaleY = transform.localScale.y;
+            }
+            // 实时计算下落拉伸效果
+            float fallSpeed = Mathf.Abs(characterMovement.velocity.y);
+            float maxFallSpeed = Mathf.Abs(Physics.gravity.y) * 0.8f; // 基于重力加速度，更合理的基准
+            float fallRatio = Mathf.Clamp01(fallSpeed / maxFallSpeed);
+
+            // 下落时Y轴拉伸：从当前Y轴开始拉伸，避免瞬间还原
+            float reducedStretchFactor = 1.0f + (fallStretchFactor - 1.0f);
+            float smoothFallRatio = fallRatio * fallRatio; // 平方缓动，先慢后快
+            float stretchFactor = 1.0f + smoothFallRatio * (reducedStretchFactor - 1.0f);
+
+            Vector3 targetFallScale = new Vector3(jumpStartScale.x, currentStartScaleY * stretchFactor, jumpStartScale.z);
+            transform.localScale = targetFallScale;
         }
 
         // 空中水平控制系统
@@ -367,6 +473,9 @@ public class CharacterJumpController : MonoBehaviour
         // 清除空中控制状态
         airHorizontalVelocity = Vector3.zero;
         initialInheritedVelocity = Vector3.zero;
+
+        // DOTween着陆回弹动画
+        StartLandingBounceAnimation();
 
         // 检查是否有输入缓存，如果有则立即执行跳跃
         if (hasJumpBufferedInput && jumpBufferCounter > 0f)
@@ -467,5 +576,8 @@ public class CharacterJumpController : MonoBehaviour
         // 重置土狼机制状态
         coyoteTimeCounter = 0f;
         wasOnGroundLastFrame = false;
+
+        // 清除所有Scale动画
+        jumpScaleTween?.Kill();
     }
 }
