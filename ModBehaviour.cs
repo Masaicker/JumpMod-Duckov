@@ -41,7 +41,8 @@ namespace Jump
             LevelManager.OnAfterLevelInitialized -= OnLevelInitialized;
 
             // 清理Harmony补丁
-            harmonyInstance?.UnpatchAll();
+            harmonyInstance?.UnpatchAll(harmonyInstance.Id);
+            JumpLogger.LogWhite($"已卸载 {harmonyInstance?.Id}");
             harmonyInstance = null;
         }
 
