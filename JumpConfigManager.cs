@@ -52,7 +52,7 @@ namespace Jump
                 new Vector2(0.1f, 0.95f), OnAccelerationDecayChanged, decimalPlaces: 2);
 
             // 按键绑定
-            ModSettingAPI.AddKeybinding("jumpKey", "跳跃按键 Jump Key", JumpKey, OnJumpKeyChanged);
+            ModSettingAPI.AddKeybindingWithDefault("jumpKey", "跳跃按键 Jump Key", JumpKey, KeyCode.Z, OnJumpKeyChanged);
 
             // 空中控制参数
             ModSettingAPI.AddSlider("airControlFactor", "空中控制强度 Air Control Strength", AirControlFactor,
@@ -65,7 +65,7 @@ namespace Jump
             ModSettingAPI.AddToggle("enableJumpLog", "启用跳跃日志 Enable Jump Log", EnableJumpLog, OnEnableJumpLogChanged);
 
             // 重置按钮
-            ModSettingAPI.AddToggle("resetConfig", "重置为默认值 Reset to Defaults", false, OnResetConfigChanged);
+            ModSettingAPI.AddButton("resetConfig", "", "重置所有配置 Reset All", OnResetConfigClicked);
         }
 
         /// <summary>
@@ -203,15 +203,9 @@ namespace Jump
         /// <summary>
         /// 重置按钮回调函数
         /// </summary>
-        private void OnResetConfigChanged(bool shouldReset)
-        {
-            if (shouldReset)
-            {
-                ResetToDefaults();
-
-                // 立即将按钮状态改回false，避免用户困惑
-                ModSettingAPI.SetValue("resetConfig", false);
-            }
+        private void OnResetConfigClicked()
+        { 
+            ResetToDefaults();
         }
 
         /// <summary>
@@ -251,12 +245,5 @@ namespace Jump
             JumpLogger.LogWhite("所有配置已重置为默认值！");
         }
 
-        /// <summary>
-        /// 移除所有配置
-        /// </summary>
-        public void RemoveConfiguration()
-        {
-            ModSettingAPI.RemoveMod();
-        }
-    }
+      }
 }

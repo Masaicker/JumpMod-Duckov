@@ -94,5 +94,21 @@ namespace Jump
             }
         }
 
+        // Harmony补丁：跳跃时禁用脚步声
+        [HarmonyPatch(typeof(CharacterSoundMaker), "Update")]
+        private class CharacterSoundMakerUpdatePrefix
+        {
+            [HarmonyPrefix]
+            static bool Prefix(CharacterSoundMaker __instance)
+            {
+                // 如果正在跳跃中，跳过脚步声更新逻辑
+                if (CharacterJumpController.isJumping)
+                {
+                    return false; // 阻止原方法执行，不播放脚步声
+                }
+                return true; // 允许原方法执行
+            }
+        }
+
     }
 }
