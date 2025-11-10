@@ -52,7 +52,7 @@ namespace Jump
                 new Vector2(0.1f, 0.95f), OnAccelerationDecayChanged, decimalPlaces: 2);
 
             // 按键绑定
-            ModSettingAPI.AddKeybindingWithDefault("jumpKey", "跳跃按键 Jump Key", JumpKey, KeyCode.Z, OnJumpKeyChanged);
+            ModSettingAPI.AddKeybinding("jumpKey", "跳跃按键 Jump Key", JumpKey, KeyCode.Z, OnJumpKeyChanged);
 
             // 空中控制参数
             ModSettingAPI.AddSlider("airControlFactor", "空中控制强度 Air Control Strength", AirControlFactor,
