@@ -6,6 +6,7 @@ using Duckov;
 using Jump;
 using HarmonyLib;
 using ModSetting;
+using Random = UnityEngine.Random;
 
 namespace Jump
 {
@@ -13,6 +14,7 @@ namespace Jump
     {
         private static Harmony? harmonyInstance;
         private static JumpConfigManager? configManager;
+        private static List<string> cachedAudioFiles = new List<string>();
 
         protected override void OnAfterSetup()
         {
@@ -27,6 +29,9 @@ namespace Jump
             {
                 JumpLogger.LogRed("ModSetting初始化失败！使用默认配置。");
             }
+
+            // 缓存音效文件
+            CacheAudioFile();
 
             // 初始化Harmony补丁
             harmonyInstance = new Harmony("Mhz.jumpmod");
@@ -70,11 +75,52 @@ namespace Jump
         }
 
         /// <summary>
+        /// 缓存音效文件路径（只执行一次）
+        /// </summary>
+        private void CacheAudioFile()
+        {
+            var assemblyDirectory = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var audioDirectory = System.IO.Path.Combine(assemblyDirectory ?? string.Empty, "audio");
+
+            if (!System.IO.Directory.Exists(audioDirectory))
+            {
+                cachedAudioFiles.Clear();
+                JumpLogger.LogWhite("音频文件夹不存在: audio");
+                return;
+            }
+
+            cachedAudioFiles.Clear();
+            string[] audioExtensions = { ".wav", ".mp3", ".ogg" };
+
+            foreach (var extension in audioExtensions)
+            {
+                var files = System.IO.Directory.GetFiles(audioDirectory, $"*{extension}");
+                cachedAudioFiles.AddRange(files);
+            }
+
+            JumpLogger.LogWhite($"缓存音频文件数量: {cachedAudioFiles.Count}");
+            if (cachedAudioFiles.Count == 0)
+            {
+                JumpLogger.LogWhite("未找到任何音效文件");
+            }
+        }
+
+        /// <summary>
         /// 获取配置管理器实例
         /// </summary>
         public static JumpConfigManager? GetConfigManager()
         {
             return configManager;
+        }
+
+        /// <summary>
+        /// 随机获取一个音效文件路径
+        /// </summary>
+        public static string? GetRandomAudioFile()
+        {
+            if (cachedAudioFiles.Count == 0) return null;
+            var index = Random.Range(0, cachedAudioFiles.Count);
+            return cachedAudioFiles[index];
         }
 
         // Harmony补丁：阻止跳跃时的闪避
@@ -85,12 +131,7 @@ namespace Jump
             static bool Prefix(CharacterMainControl __instance)
             {
                 // 如果正在跳跃中，阻止闪避
-                if (CharacterJumpController.isJumping)
-                {
-                    JumpLogger.LogWhite("跳跃中：闪避动作被Harmony补丁阻止");
-                    return false; // 阻止原方法执行
-                }
-                return true; // 允许原方法执行
+                return !CharacterJumpController.isJumping;
             }
         }
 
@@ -101,12 +142,7 @@ namespace Jump
             [HarmonyPrefix]
             static bool Prefix(CharacterSoundMaker __instance)
             {
-                // 如果正在跳跃中，跳过脚步声更新逻辑
-                if (CharacterJumpController.isJumping)
-                {
-                    return false; // 阻止原方法执行，不播放脚步声
-                }
-                return true; // 允许原方法执行
+                return !CharacterJumpController.isJumping;
             }
         }
 

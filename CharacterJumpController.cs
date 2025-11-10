@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using Duckov.Modding;
 using DG.Tweening;
 using ModBehaviour = Jump.ModBehaviour;
+using FMOD.Studio;
 
 /// <summary>
 /// 角色跳跃控制器 - 马里奥式跳跃
@@ -13,9 +14,9 @@ using ModBehaviour = Jump.ModBehaviour;
 /// </summary>
 public class CharacterJumpController : MonoBehaviour
 {
-    private CharacterMainControl characterMainControl;
-    private Movement movement;
-    private CharacterMovement characterMovement;
+    private CharacterMainControl characterMainControl = null!;
+    private Movement movement = null!;
+    private CharacterMovement characterMovement = null!;
 
     // 配置参数 - 从JumpConfigManager获取
     private static JumpConfigManager? configManager;
@@ -36,6 +37,9 @@ public class CharacterJumpController : MonoBehaviour
     private Vector3 jumpStartScale;    // 跳跃开始时的原始scale
     private Tween? jumpScaleTween;      // DOTween动画
     private float currentStartScaleY;   // 记录当前实际的Y轴scale（用于下落动画）
+
+    // 音效管理
+    private EventInstance? jumpSoundInstance;
 
     // 可配置的Scale动画参数
     [Header("跳跃Scale动画参数")]
@@ -250,6 +254,9 @@ public class CharacterJumpController : MonoBehaviour
         jumpScaleTween = transform.DOScale(squashedScale, squashDuration)
             .SetEase(Ease.OutBack)
             .OnComplete(StartStretchAnimation);
+
+        // 播放跳跃音效
+        PlayJumpSound();
 
         JumpLogger.LogWhite($"跳跃开始 - 初始力度: {currentJumpPower:F2}");
         JumpLogger.LogWhite($"DOTween挤压动画 - 目标ScaleY: {squashedScale.y:F3}");
@@ -554,6 +561,21 @@ public class CharacterJumpController : MonoBehaviour
     }
 
     /// <summary>
+    /// 播放跳跃音效
+    /// </summary>
+    private void PlayJumpSound()
+    {
+        var audioFile = ModBehaviour.GetRandomAudioFile();
+        if (audioFile == null) return;
+        if (jumpSoundInstance.HasValue && jumpSoundInstance.Value.isValid())
+        {
+            jumpSoundInstance.Value.stop(STOP_MODE.IMMEDIATE);
+            jumpSoundInstance.Value.release();
+        }
+        jumpSoundInstance = Duckov.AudioManager.PostCustomSFX(audioFile, characterMainControl.gameObject);
+    }
+
+    /// <summary>
     /// 重置跳跃状态
     /// </summary>
     public void ResetJumpState()
@@ -579,5 +601,18 @@ public class CharacterJumpController : MonoBehaviour
 
         // 清除所有Scale动画
         jumpScaleTween?.Kill();
+
+        // 清除跳跃音效引用
+        jumpSoundInstance = null;
+    }
+    
+    private void OnDestroy()
+    {
+        if (jumpSoundInstance.HasValue && jumpSoundInstance.Value.isValid())
+        {
+            jumpSoundInstance.Value.stop(STOP_MODE.IMMEDIATE);
+            jumpSoundInstance.Value.release();
+            jumpSoundInstance = null;
+        }
     }
 }
