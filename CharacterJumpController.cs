@@ -105,13 +105,10 @@ public class CharacterJumpController : MonoBehaviour
         if (configManager == null) return;
 
         // 检查配置的跳跃按键
-        KeyCode jumpKey = configManager.JumpKey;
-
-        // 将KeyCode转换为InputSystem的Key
-        Key jumpInputKey = (Key)System.Enum.Parse(typeof(Key), jumpKey.ToString());
+        var jumpKey = configManager.JumpKey;
 
         // 按下跳跃键
-        if (Keyboard.current[jumpInputKey].wasPressedThisFrame)
+        if (Input.GetKeyDown(jumpKey))
         {
             bool jumpStarted = TryStartJump();
 
@@ -125,7 +122,7 @@ public class CharacterJumpController : MonoBehaviour
         }
 
         // 松开跳跃键
-        if (Keyboard.current[jumpInputKey].wasReleasedThisFrame)
+        if (Input.GetKeyUp(jumpKey))
         {
             ReleaseJump();
         }
@@ -133,7 +130,7 @@ public class CharacterJumpController : MonoBehaviour
         // 更新按住状态 - 只有在跳跃键未释放的情况下才更新
         if (!jumpReleased)
         {
-            isJumpingHeld = Keyboard.current[jumpInputKey].isPressed;
+            isJumpingHeld = Input.GetKey(jumpKey);
         }
     }
 
