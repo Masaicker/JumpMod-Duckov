@@ -8,7 +8,7 @@ using ModBehaviour = Jump.ModBehaviour;
 using FMOD.Studio;
 
 /// <summary>
-/// 角色跳跃控制器 - 马里奥式跳跃
+/// 角色跳跃控制器 - 马里奥式跳跃 
 /// 混合控制：初始力度 + 持续微调
 /// 支持ModSetting配置系统
 /// </summary>
@@ -19,7 +19,7 @@ public class CharacterJumpController : MonoBehaviour
     private CharacterMovement characterMovement = null!;
 
     // 配置参数 - 从JumpConfigManager获取
-    private static JumpConfigManager? configManager;
+    private static JumpConfigManager configManager;
 
     // 跳跃状态
     public static bool isJumping = false;
@@ -35,7 +35,7 @@ public class CharacterJumpController : MonoBehaviour
 
     // Scale动效相关参数
     private Vector3 jumpStartScale;    // 跳跃开始时的原始scale
-    private Tween? jumpScaleTween;      // DOTween动画
+    private Tween jumpScaleTween;      // DOTween动画
     private float currentStartScaleY;   // 记录当前实际的Y轴scale（用于下落动画）
 
     // 音效管理

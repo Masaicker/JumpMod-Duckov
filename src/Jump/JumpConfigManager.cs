@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Duckov.Modding;
-using ModSetting;
+using MasaickerLib.ModSetting;
 
 namespace Jump
 {
     /// <summary>
-    /// 跳跃MOD配置管理器 - 处理所有ModSetting配置
+    /// 跳跃MOD配置管理器 - 处理所有 ModSetting配置
     /// </summary>
     public class JumpConfigManager
     {

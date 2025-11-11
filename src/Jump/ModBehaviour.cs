@@ -5,30 +5,23 @@ using UnityEngine;
 using Duckov;
 using Jump;
 using HarmonyLib;
-using ModSetting;
+using MasaickerLib.ModSetting;
 using Random = UnityEngine.Random;
 
 namespace Jump
 {
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
-        private static Harmony? harmonyInstance;
-        private static JumpConfigManager? configManager;
+        private static Harmony harmonyInstance;
+        private static JumpConfigManager configManager;
         private static List<string> cachedAudioFiles = new List<string>();
 
         protected override void OnAfterSetup()
         {
             // 初始化ModSetting配置系统
-            if (ModSettingAPI.Init(info))
-            {
-                configManager = new JumpConfigManager(info);
-                configManager.SetupConfiguration();
-                JumpLogger.LogWhite("ModSetting配置系统初始化成功！");
-            }
-            else
-            {
-                JumpLogger.LogRed("ModSetting初始化失败！使用默认配置。");
-            }
+            ModSettingAPI.Init(info);
+            configManager = new JumpConfigManager(info);
+            configManager.SetupConfiguration();
 
             // 缓存音效文件
             CacheAudioFile();
@@ -108,7 +101,7 @@ namespace Jump
         /// <summary>
         /// 获取配置管理器实例
         /// </summary>
-        public static JumpConfigManager? GetConfigManager()
+        public static JumpConfigManager GetConfigManager()
         {
             return configManager;
         }
@@ -116,7 +109,7 @@ namespace Jump
         /// <summary>
         /// 随机获取一个音效文件路径
         /// </summary>
-        public static string? GetRandomAudioFile()
+        public static string GetRandomAudioFile()
         {
             if (cachedAudioFiles.Count == 0) return null;
             var index = Random.Range(0, cachedAudioFiles.Count);
