@@ -152,6 +152,13 @@ public class CharacterJumpController : MonoBehaviour
     /// </summary>
     private bool CanJump()
     {
+        // 检查输入管理器状态 - 输入被禁用时禁止跳跃
+        if (!InputManager.InputActived)
+        {
+            JumpLogger.LogYellow("输入被禁用，禁止跳跃");
+            return false;
+        }
+        
         if (isJumping)
         {
             return false;
@@ -178,13 +185,6 @@ public class CharacterJumpController : MonoBehaviour
             return false;
         }
 
-        // 检查输入管理器状态 - 输入被禁用时禁止跳跃
-        if (!InputManager.InputActived)
-        {
-            JumpLogger.LogYellow("输入被禁用，禁止跳跃");
-            return false;
-        }
-
         return true;
     }
 
@@ -193,19 +193,19 @@ public class CharacterJumpController : MonoBehaviour
     /// </summary>
     private bool CanBufferJumpInput()
     {
-        if (characterMainControl.Health.IsDead || !characterMainControl.CanMove())
-        {
-            JumpLogger.LogYellow("状态不允许，不设置跳跃缓存");
-            return false;
-        }
-
         // 检查输入管理器状态 - 输入被禁用时禁止缓存跳跃输入
         if (!InputManager.InputActived)
         {
             JumpLogger.LogYellow("输入被禁用，不设置跳跃缓存");
             return false;
         }
-
+        
+        if (characterMainControl.Health.IsDead || !characterMainControl.CanMove())
+        {
+            JumpLogger.LogYellow("状态不允许，不设置跳跃缓存");
+            return false;
+        }
+        
         return true;
     }
 
