@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using Duckov;
+using Duckov.Modding;
 using Jump;
 using HarmonyLib;
 using MasaickerLib.ModSetting;
@@ -16,12 +16,33 @@ namespace Jump
         private static JumpConfigManager configManager;
         private static List<string> cachedAudioFiles = new List<string>();
 
+        private void OnEnable()
+        {
+            // 监听ModSetting加载事件（处理Jump MOD先加载的情况）
+            ModManager.OnModActivated += OnModActivated;
+        }
+
+        private void OnDisable()
+        {
+            // 清理事件订阅
+            ModManager.OnModActivated -= OnModActivated;
+        }
+
+        private void OnModActivated(ModInfo modInfo, Duckov.Modding.ModBehaviour behaviour)
+        {
+            // 场景1: Jump MOD先加载，等待ModSetting加载
+            if (modInfo.name != ModSettingAPI.MOD_NAME) return;
+            if (!ModSettingAPI.Init(info)) return;
+            InitializeConfiguration();
+        }
+
         protected override void OnAfterSetup()
         {
-            // 初始化ModSetting配置系统
-            ModSettingAPI.Init(info);
-            configManager = new JumpConfigManager(info);
-            configManager.SetupConfiguration();
+            // 场景2: ModSetting已经加载（ModSetting先于Jump MOD加载）
+            if (ModSettingAPI.Init(info))
+            {
+                InitializeConfiguration();
+            }
 
             // 缓存音效文件
             CacheAudioFile();
@@ -31,6 +52,15 @@ namespace Jump
             harmonyInstance.PatchAll();
             // 监听关卡初始化完成事件
             LevelManager.OnAfterLevelInitialized += OnLevelInitialized;
+        }
+
+        private void InitializeConfiguration()
+        {
+            // 先加载保存的配置
+            JumpSetting.Init();
+            // 再绑定UI
+            configManager = new JumpConfigManager(info);
+            configManager.SetupConfiguration();
         }
 
         protected override void OnBeforeDeactivate()
@@ -96,14 +126,6 @@ namespace Jump
             {
                 JumpLogger.LogWhite("未找到任何音效文件");
             }
-        }
-
-        /// <summary>
-        /// 获取配置管理器实例
-        /// </summary>
-        public static JumpConfigManager GetConfigManager()
-        {
-            return configManager;
         }
 
         /// <summary>

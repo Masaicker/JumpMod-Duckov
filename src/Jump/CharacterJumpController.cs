@@ -18,9 +18,6 @@ public class CharacterJumpController : MonoBehaviour
     private Movement movement = null!;
     private CharacterMovement characterMovement = null!;
 
-    // 配置参数 - 从JumpConfigManager获取
-    private static JumpConfigManager configManager;
-
     // 跳跃状态
     public static bool isJumping = false;
     private bool isJumpingHeld = false;
@@ -83,9 +80,6 @@ public class CharacterJumpController : MonoBehaviour
             JumpLogger.LogRed("找不到CharacterMovement组件！");
             enabled = false;
         }
-
-        // 获取配置管理器
-        configManager = ModBehaviour.GetConfigManager();
     }
 
     void Update()
@@ -102,10 +96,8 @@ public class CharacterJumpController : MonoBehaviour
     /// </summary>
     private void HandleJumpInput()
     {
-        if (configManager == null) return;
-
         // 检查配置的跳跃按键
-        var jumpKey = configManager.JumpKey;
+        var jumpKey = JumpSetting.JumpKey;
 
         // 按下跳跃键
         if (Input.GetKeyDown(jumpKey))
@@ -214,12 +206,10 @@ public class CharacterJumpController : MonoBehaviour
     /// </summary>
     private void StartJump()
     {
-        if (configManager == null) return;
-
         isJumping = true;
         isJumpingHeld = true;
-        currentJumpPower = configManager.MinJumpPower;
-        currentBoostAcceleration = configManager.BoostAcceleration;
+        currentJumpPower = JumpSetting.MinJumpPower;
+        currentBoostAcceleration = JumpSetting.BoostAcceleration;
         jumpStartHeight = transform.position.y; // 记录起跳点高度
 
         // 清除输入缓存状态
@@ -285,8 +275,7 @@ public class CharacterJumpController : MonoBehaviour
     {
         // 根据跳跃高度动态调整回弹参数
         float jumpHeight = transform.position.y - jumpStartHeight;
-        if (configManager == null) return;
-        float maxExpectedHeight = configManager.MaxJumpPower * configManager.MaxJumpPower / (2f * Mathf.Abs(Physics.gravity.y));
+        float maxExpectedHeight = JumpSetting.MaxJumpPower * JumpSetting.MaxJumpPower / (2f * Mathf.Abs(Physics.gravity.y));
         float heightRatio = Mathf.Clamp01(jumpHeight / maxExpectedHeight);
 
         // 回弹时间：跳得越高，回弹时间越长
@@ -329,24 +318,22 @@ public class CharacterJumpController : MonoBehaviour
     /// </summary>
     private void UpdateJumpState()
     {
-        if (configManager == null) return;
-
         // 更新输入缓存计时器
         UpdateTimers();
 
         // 持续加速逻辑 - 物理衰减模式
-        if (isJumping && isJumpingHeld && !jumpReleased && characterMovement.velocity.y > 0 && currentJumpPower < configManager.MaxJumpPower)
+        if (isJumping && isJumpingHeld && !jumpReleased && characterMovement.velocity.y > 0 && currentJumpPower < JumpSetting.MaxJumpPower)
         {
             // 应用当前加速度
             Vector3 velocity = characterMovement.velocity;
             velocity.y += currentBoostAcceleration * Time.deltaTime;
-            velocity.y = Mathf.Min(velocity.y, configManager.MaxJumpPower);
+            velocity.y = Mathf.Min(velocity.y, JumpSetting.MaxJumpPower);
             characterMovement.velocity = velocity;
 
             currentJumpPower = velocity.y;
 
             // 加速度自然衰减
-            currentBoostAcceleration *= Mathf.Pow(configManager.AccelerationDecay, Time.deltaTime);
+            currentBoostAcceleration *= Mathf.Pow(JumpSetting.AccelerationDecay, Time.deltaTime);
 
             // 如果加速度太小了，就停止加速
             if (currentBoostAcceleration < 0.1f)
@@ -515,11 +502,9 @@ public class CharacterJumpController : MonoBehaviour
     /// </summary>
     private void UpdateAirControl()
     {
-        if (configManager == null) return;
-
         // 1. 应用空气阻力（时间相关的指数衰减，帧率无关）
         // AirDragFactor应该改为每秒的衰减率，而不是每帧
-        airHorizontalVelocity *= Mathf.Pow(configManager.AirDragFactor, Time.deltaTime * 5);
+        airHorizontalVelocity *= Mathf.Pow(JumpSetting.AirDragFactor, Time.deltaTime * 5);
         //JumpLogger.LogWhite(airHorizontalVelocity.magnitude);
 
         // 2. 获取当前移动输入
@@ -530,7 +515,7 @@ public class CharacterJumpController : MonoBehaviour
         {
             // 在惯性基础上叠加空中控制加速度
             float airAcceleration = movement.Running ? movement.runAcc : movement.walkAcc;
-            airAcceleration *= configManager.AirControlFactor; // 使用配置的空中控制系数
+            airAcceleration *= JumpSetting.AirControlFactor; // 使用配置的空中控制系数
 
             // 计算当前帧的空中控制加速度向量
             Vector3 airControlAcceleration = currentMoveInput * (airAcceleration * Time.deltaTime);
