@@ -1,7 +1,6 @@
 using ECM2;
 using Jump;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Duckov.Modding;
 using DG.Tweening;
 using ModBehaviour = Jump.ModBehaviour;
@@ -92,16 +91,15 @@ public class CharacterJumpController : MonoBehaviour
     }
 
     /// <summary>
-    /// 处理跳跃输入 - 使用新Input System
+    /// 处理跳跃输入 - 使用经典KeyCode系统
     /// </summary>
     private void HandleJumpInput()
     {
         // 检查配置的跳跃按键
         var jumpKey = JumpSetting.JumpKey;
-        var keyboard = Keyboard.current;
-        
-        // 按下跳跃键 - 使用新Input System
-        if (keyboard[jumpKey].wasPressedThisFrame)
+
+        // 按下跳跃键 - 使用经典Input API
+        if (Input.GetKeyDown(jumpKey))
         {
             bool jumpStarted = TryStartJump();
 
@@ -114,8 +112,8 @@ public class CharacterJumpController : MonoBehaviour
             }
         }
 
-        // 松开跳跃键 - 使用新Input System
-        if (keyboard[jumpKey].wasReleasedThisFrame)
+        // 松开跳跃键 - 使用经典Input API
+        if (Input.GetKeyUp(jumpKey))
         {
             ReleaseJump();
         }
@@ -123,7 +121,7 @@ public class CharacterJumpController : MonoBehaviour
         // 更新按住状态 - 只有在跳跃键未释放的情况下才更新
         if (!jumpReleased)
         {
-            isJumpingHeld = keyboard[jumpKey].isPressed;
+            isJumpingHeld = Input.GetKey(jumpKey);
         }
     }
 

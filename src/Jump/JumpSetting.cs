@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using MasaickerLib.ModSetting;
 
 namespace Jump
@@ -14,7 +13,7 @@ namespace Jump
         public static float MaxJumpPower { get; private set; } = 8f;
         public static float BoostAcceleration { get; private set; } = 10f;
         public static float AccelerationDecay { get; private set; } = 0.7f;
-        public static Key JumpKey { get; private set; } = Key.Z;
+        public static KeyCode JumpKey { get; private set; } = KeyCode.Z;
         public static bool EnableJumpLog { get; private set; } = false;
 
         // 空中控制参数
@@ -54,9 +53,9 @@ namespace Jump
             AccelerationDecay = Mathf.Clamp(value, 0.1f, 0.95f);
         }
 
-        public static void SetJumpKey(Key key)
+        public static void SetJumpKey(KeyCode keyCode)
         {
-            JumpKey = key;
+            JumpKey = keyCode;
         }
 
         public static void SetAirControlFactor(float value)
@@ -112,7 +111,7 @@ namespace Jump
                 JumpLogger.LogWhite($"读取加速度衰减系数: {accelerationDecay}");
             }
 
-            if (ModSettingAPI.GetSavedValue("jumpKey", out Key jumpKey))
+            if (ModSettingAPI.GetSavedValue("jumpKey", out KeyCode jumpKey))
             {
                 SetJumpKey(jumpKey);
                 JumpLogger.LogWhite($"读取跳跃按键: {jumpKey}");
@@ -151,7 +150,7 @@ namespace Jump
             MaxJumpPower = 8f;
             BoostAcceleration = 10f;
             AccelerationDecay = 0.7f;
-            JumpKey = Key.Z;
+            JumpKey = KeyCode.Z;
             EnableJumpLog = false;
             AirControlFactor = 0.6f;
             AirDragFactor = 0.8f;
@@ -161,7 +160,7 @@ namespace Jump
             ModSettingAPI.SetValue("maxJumpPower", 8f);
             ModSettingAPI.SetValue("boostAcceleration", 10f);
             ModSettingAPI.SetValue("accelerationDecay", 0.7f);
-            ModSettingAPI.SetValue("jumpKey", Key.Z);
+            ModSettingAPI.SetValue("jumpKey", KeyCode.Z);
             ModSettingAPI.SetValue("enableJumpLog", false);
             ModSettingAPI.SetValue("airControlFactor", 0.6f);
             ModSettingAPI.SetValue("airDragFactor", 0.8f);

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Duckov.Modding;
 using MasaickerLib.ModSetting;
 
@@ -41,7 +40,7 @@ namespace Jump
 
             // 按键绑定
             ModSettingAPI.AddKeybinding("jumpKey", "跳跃按键 Jump Key",
-                JumpSetting.JumpKey, Key.Z,
+                JumpSetting.JumpKey, KeyCode.Z,
                 JumpSetting.SetJumpKey);
 
             // 空中控制参数
