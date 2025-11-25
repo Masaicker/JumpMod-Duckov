@@ -92,15 +92,16 @@ public class CharacterJumpController : MonoBehaviour
     }
 
     /// <summary>
-    /// 处理跳跃输入
+    /// 处理跳跃输入 - 使用新Input System
     /// </summary>
     private void HandleJumpInput()
     {
         // 检查配置的跳跃按键
         var jumpKey = JumpSetting.JumpKey;
-
-        // 按下跳跃键
-        if (Input.GetKeyDown(jumpKey))
+        var keyboard = Keyboard.current;
+        
+        // 按下跳跃键 - 使用新Input System
+        if (keyboard[jumpKey].wasPressedThisFrame)
         {
             bool jumpStarted = TryStartJump();
 
@@ -113,8 +114,8 @@ public class CharacterJumpController : MonoBehaviour
             }
         }
 
-        // 松开跳跃键
-        if (Input.GetKeyUp(jumpKey))
+        // 松开跳跃键 - 使用新Input System
+        if (keyboard[jumpKey].wasReleasedThisFrame)
         {
             ReleaseJump();
         }
@@ -122,7 +123,7 @@ public class CharacterJumpController : MonoBehaviour
         // 更新按住状态 - 只有在跳跃键未释放的情况下才更新
         if (!jumpReleased)
         {
-            isJumpingHeld = Input.GetKey(jumpKey);
+            isJumpingHeld = keyboard[jumpKey].isPressed;
         }
     }
 

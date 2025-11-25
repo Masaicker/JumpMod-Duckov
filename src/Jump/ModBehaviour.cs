@@ -15,6 +15,7 @@ namespace Jump
         private static Harmony harmonyInstance;
         private static JumpConfigManager configManager;
         private static List<string> cachedAudioFiles = new List<string>();
+        public static bool UISettingsReady;
 
         private void OnEnable()
         {
@@ -61,6 +62,9 @@ namespace Jump
             // 再绑定UI
             configManager = new JumpConfigManager(info);
             configManager.SetupConfiguration();
+
+            // 标记UI设置已准备就绪
+            UISettingsReady = true;
         }
 
         protected override void OnBeforeDeactivate()
