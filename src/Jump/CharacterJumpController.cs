@@ -2,6 +2,7 @@ using ECM2;
 using Jump;
 using UnityEngine;
 using Duckov.Modding;
+using System;
 using DG.Tweening;
 using ModBehaviour = Jump.ModBehaviour;
 using FMOD.Studio;
@@ -36,6 +37,10 @@ public class CharacterJumpController : MonoBehaviour
 
     // 音效管理
     private EventInstance? jumpSoundInstance;
+
+    // 跳跃事件
+    public static Action OnJumpStart;
+    public static Action OnJumpLand;
 
     // 可配置的Scale动画参数
     [Header("跳跃Scale动画参数")]
@@ -243,6 +248,9 @@ public class CharacterJumpController : MonoBehaviour
 
         // 播放跳跃音效
         PlayJumpSound();
+
+        // 触发起跳事件
+        OnJumpStart?.Invoke();
 
         JumpLogger.LogWhite($"跳跃开始 - 初始力度: {currentJumpPower:F2}");
         JumpLogger.LogWhite($"DOTween挤压动画 - 目标ScaleY: {squashedScale.y:F3}");
@@ -466,6 +474,9 @@ public class CharacterJumpController : MonoBehaviour
 
         // DOTween着陆回弹动画
         StartLandingBounceAnimation();
+
+        // 触发落地事件
+        OnJumpLand?.Invoke();
 
         // 检查是否有输入缓存，如果有则立即执行跳跃
         if (hasJumpBufferedInput && jumpBufferCounter > 0f)
